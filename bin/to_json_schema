@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require_relative '../lib/to_json_schema'
+
+options = {}
+args = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: to_json_schema [options]"
+
+  opts.on("-iINPUT", "--input=INPUT", "JSON file to convert") do |i|
+    args[:input] = i
+  end
+
+  opts.on("-sSTRING", "--string=STRING", "JSON 'string' to convert") do |s|
+    args[:string] = s
+  end
+
+  opts.on("-oOUTPUT", "--output=OUTPUT", "Schema output file") do |o|
+    args[:output] = o
+  end
+
+end.parse!
+
+puts args
+
+if args[:input] && args[:string]
+  puts "Please only specify either --input or --string, but not both"
+  exit 1
+end
+
+if args[:input]
+  puts "Going to read in json file #{args[:input]}"
+end
+
+converter = ToJsonSchema::Converter.new(args)
+converter.convert
