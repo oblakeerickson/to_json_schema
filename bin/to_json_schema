@@ -34,4 +34,5 @@ if args[:input]
 end
 
 converter = ToJsonSchema::Converter.new(args)
-converter.convert
+converter.run
+converter.print
