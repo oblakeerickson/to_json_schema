@@ -19,14 +19,23 @@ module ToJsonSchema
     def load_content
       if @args[:input]
         content = self.read_file
-      elsif
-        content = @args[:string]
+      else
+        content = self.read_string
       end
     end
 
     def run
       content = self.load_content
-      @schema[:properties], @schema[:required] = walk(content)
+      if content.is_a? Array
+        @schema.delete("additionalProperties")
+        @schema[:type] = "array"
+        @schema[:minItems] = 1
+        @schema[:uniqItems] = true
+        @schema[:items] = { type: "object" }
+        @schema[:items][:properties], @schema[:items][:required] = walk(content[0])
+      else # Object
+        @schema[:properties], @schema[:required] = walk(content)
+      end
     end
 
     def walk(object)
@@ -39,13 +48,35 @@ module ToJsonSchema
           p, r = walk(object[k])
           h[k.to_sym] = {
             type: type,
+            additionalProperties: false,
             properties: p,
             required: r
           }
         elsif type == "array"
+          item = object[k].first
+          if item.is_a? Hash
+            p, r = walk(item)
+            h[k.to_sym] = {
+              type: type,
+              items: [
+                {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: p,
+                  required: r
+                }
+              ]
+            }
+          else
+            h[k.to_sym] = {
+              type: type,
+              items: []
+            }
+          end
+        elsif type == "null"
+          # null is not a valid OAS3 type
           h[k.to_sym] = {
-            type: type,
-            items: []
+            type: ["string", "null"]
           }
         else
           h[k.to_sym] = {
@@ -59,20 +90,17 @@ module ToJsonSchema
 
     def get_type(value)
       type = ""
-      if value.is_a? Integer
-        type = "integer"
-      end
-      if value.is_a? Hash
-        type = "object"
-      end
-      if value.is_a? String
-        type = "string"
-      end
+      type = "integer" if value.is_a? Integer
+      type = "object" if value.is_a? Hash
+      type = "string" if value.is_a? String
       type = "boolean" if value == true || value == false
-      if value.is_a? Array
-        type = "array"
-      end
+      type = "array" if value.is_a? Array
+      type = "null" if value == nil
       type
+    end
+
+    def read_string
+      JSON.parse(@args[:string])
     end
 
     def read_file

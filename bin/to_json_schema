@@ -22,15 +22,9 @@ OptionParser.new do |opts|
 
 end.parse!
 
-puts args
-
 if args[:input] && args[:string]
   puts "Please only specify either --input or --string, but not both"
   exit 1
-end
-
-if args[:input]
-  puts "Going to read in json file #{args[:input]}"
 end
 
 converter = ToJsonSchema::Converter.new(args)
