@@ -30,7 +30,7 @@ module ToJsonSchema
         @schema.delete("additionalProperties")
         @schema[:type] = "array"
         @schema[:minItems] = 1
-        @schema[:uniqItems] = true
+        @schema[:uniqueItems] = true
         @schema[:items] = { type: "object" }
         @schema[:items][:properties], @schema[:items][:required] = walk(content[0])
       else # Object
